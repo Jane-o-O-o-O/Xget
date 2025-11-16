@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Xget is a high-performance acceleration engine for developer resources built on Cloudflare Workers. It provides unified acceleration for code repositories, package managers, container registries, AI inference providers, and more. The application proxies requests to various platforms, applies intelligent caching, and implements security measures while maintaining protocol compliance (Git, Docker/OCI, AI APIs).
+Xget is a high-performance acceleration engine for developer resources built on Cloudflare Pages. It provides unified acceleration for code repositories, package managers, container registries, AI inference providers, and more. The application proxies requests to various platforms, applies intelligent caching, and implements security measures while maintaining protocol compliance (Git, Docker/OCI, AI APIs).
+
+**Architecture:** Cloudflare Pages with Functions (serverless edge functions)
 
 **Key Features:**
 
@@ -20,8 +22,11 @@ Xget is a high-performance acceleration engine for developer resources built on 
 ### Development
 
 ```bash
-# Start local development server with Wrangler
+# Start local development server with Wrangler (Pages mode)
 npm run dev
+
+# Start as Worker (legacy mode)
+npm run dev:worker
 
 # Type check without emitting files
 npm run type-check
@@ -65,12 +70,15 @@ npm run format:check
 ### Deployment
 
 ```bash
-# Deploy to Cloudflare Workers
+# Deploy to Cloudflare Pages
 npm run deploy
 # or
-wrangler deploy
+wrangler pages deploy
 
-# Start production preview
+# Deploy as Worker (legacy mode)
+npm run deploy:worker
+
+# Start local production preview
 npm start
 ```
 
@@ -88,9 +96,20 @@ podman run -p 8080:8080 xget
 
 ## Architecture
 
-### Core Components
+### Project Structure
 
-**`src/index.js`** (1432 lines) - Main request handler
+**`functions/[[path]].js`** - Cloudflare Pages Function (catch-all route)
+
+- Exports `onRequest()` handler for all incoming requests
+- Delegates to `handleRequest()` from `src/index.js`
+- Provides compatibility layer between Pages and Worker APIs
+
+**`public/`** - Static assets directory
+
+- `index.html` - Landing page with usage examples
+- Served by Cloudflare Pages for root path access
+
+**`src/index.js`** (1432+ lines) - Main request handler
 
 - `handleRequest()` - Core request processor with caching, retry logic, security validation
 - `PerformanceMonitor` - Tracks timing metrics throughout request lifecycle
@@ -241,9 +260,15 @@ Configure via Cloudflare Workers environment or `.dev.vars`:
 
 ## Deployment Targets
 
-1. **Cloudflare Workers** (primary): Zero-config deployment with global edge network
-2. **Docker/Podman**: Self-hosted with workerd runtime (see Dockerfile)
-3. **Local development**: Wrangler dev server on localhost
+1. **Cloudflare Pages** (primary): Serverless deployment with edge functions and global CDN
+   - Use `npm run deploy` or `wrangler pages deploy`
+   - Functions run on Cloudflare's edge network worldwide
+   - Static assets served from `public/` directory
+2. **Cloudflare Workers** (legacy): Direct Worker deployment for backward compatibility
+   - Use `npm run deploy:worker` or `wrangler deploy`
+   - Same runtime, different deployment model
+3. **Docker/Podman**: Self-hosted with workerd runtime (see Dockerfile)
+4. **Local development**: Wrangler dev server on localhost
 
 ## License
 

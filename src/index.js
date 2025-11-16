@@ -1401,6 +1401,9 @@ function addPerformanceHeaders(response, monitor) {
  * // npm run dev
  * // Wrangler dev server simulates Cloudflare Workers environment
  */
+// Export handleRequest for use in Cloudflare Pages Functions
+export { handleRequest };
+
 export default {
   /**
    * Main entry point for the Cloudflare Worker fetch event.
